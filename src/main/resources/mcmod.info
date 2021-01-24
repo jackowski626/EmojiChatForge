@@ -9,7 +9,7 @@
     "updateUrl": "${updateUrl}",
     "authorList": ${authorList},
     "credits": "${credits}",
-    "logoFile": "",
+    "logoFile": "assets/${modid}/textures/logo.png",
     "screenshots": [],
     "dependencies": []
   }
