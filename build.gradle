@@ -32,22 +32,20 @@ buildscript {
             name = "Forge Maven"
             url = "https://files.minecraftforge.net/maven"
         }
-        /*maven {
+        maven {
             name = "Sonatype Maven"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
         maven {
             name = "JitPack Maven"
             url = "https://jitpack.io"
-        }*/
+        }
     }
-    
+
     dependencies {
-        //classpath name: "ForgeGradle",    group: "com.github.CDAGaming",                version: "1c670759c5"
+        classpath name: "ForgeGradle",    group: "com.github.CDAGaming",                version: "1c670759c5"
     }
 }
-
-compileJava.options.encoding = 'UTF-8'
 
 apply plugin: 'forge'
 apply plugin: 'idea'
@@ -57,6 +55,8 @@ allprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 }
+
+compileJava.options.encoding = 'UTF-8'
 
 idea{
     module {
