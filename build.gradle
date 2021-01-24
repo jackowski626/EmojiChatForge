@@ -1,0 +1,178 @@
+/**
+ * MIT License
+ *
+ * Copyright 2020 basdxz
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT  OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * TODO: Tutorial on how to install JDK8 and setup Intellij for PC, Linux and Mac
+ * TODO: Expand example to a multi-project build
+ * TODO: Explain how to setup Travis CI
+ */
+
+//Repos and Deps of the Gradle buildscript are listed here.
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "Forge Maven"
+            url = "https://files.minecraftforge.net/maven"
+        }
+        /*maven {
+            name = "Sonatype Maven"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+        maven {
+            name = "JitPack Maven"
+            url = "https://jitpack.io"
+        }*/
+    }
+    
+    dependencies {
+        //classpath name: "ForgeGradle",    group: "com.github.CDAGaming",                version: "1c670759c5"
+    }
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+apply plugin: 'forge'
+apply plugin: 'idea'
+
+allprojects {
+    apply plugin: 'java'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
+
+idea{
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+//Adds a git commit dependent appendage to the file name
+//Helps to differentiate artefacts if you don't up the version.
+static def getVersionAppendage() {
+    def proc = "git rev-parse --short HEAD".execute()
+    proc.waitFor()
+    return "DEV." + proc.exitValue() ? proc.text.trim() : "GITBORK"
+}
+
+//Loads configs from gradle.properties
+ext {
+    modid       =   "${project_modid}"
+    modname     =   "${project_name}"
+    modversion  =   "${project_version}"
+    modgithead  =   getVersionAppendage()
+    modauthors  =   "${project_authors}"
+    modurl      =   "${project_url}"
+    modupdateurl=   "${project_update_url}"
+    modcredits  =   "${project_credits}"
+}
+//Should follow: https://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = "${project_group}"
+//Follows modid by default, name of the *.jar
+archivesBaseName = "${project_modid}"
+//Appended to the end of the *.jar after archivesBaseName
+version = "1.7.10-" + modversion// + "-" + modgithead
+
+minecraft {
+    //Version of Forge Mod Loader to use
+    version = "1.7.10-10.13.4.1614-1.7.10"
+    //Directory where runClient or runServer executes from, sometimes set as eclipse
+    runDir = "run"
+    //Replaces values in the Reference.java at compile time
+    replaceIn "${project_reference}"
+    replace "@MODID@",      modid
+    replace "@NAME@",       modname
+    replace "@VERSION@",    modversion
+}
+
+//Extends the shadow dependency configuration with compileOnly
+configurations {
+    compileOnly.extendsFrom shadow
+}
+
+//Creates deobfuscated jar
+task deobfJar(type: Jar) {
+    from sourceSets.main.output
+    classifier = 'dev'
+}
+
+//Creates source code jar
+task sourceJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+//Expands artifacts
+artifacts {
+    archives deobfJar
+    archives sourceJar
+}
+
+/**
+ * Expands the jar task to put more info into the META-INF/MANIFEST.MF inside the final *.jar
+ * The manifest follows Oracle spec from: https://docs.oracle.com/javase/tutorial/deployment/jar/packageman.html
+**/
+jar {
+    manifest {
+        attributes(
+                [
+                        "Specification-Title"     : modname,
+                        "Specification-Version"   : modversion,
+                        "Specification-Vendor"    : modauthors,
+                        "Implementation-Title"    : modname,
+                        "Implementation-Version"  : modgithead,
+                        "Implementation-Vendor"   : modauthors,
+                        "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                ]
+        )
+    }
+}
+
+//Replaces values inside mcmod.info during build time.
+processResources {
+    //List of properties that will trigger this task to rerun when changed.
+    inputs.property 'modid',        project.modid
+    inputs.property 'name',         project.modname
+    inputs.property 'version',      project.modversion
+    inputs.property 'authorList',   project.modauthors
+    inputs.property 'url',          project.modurl
+    inputs.property 'updateUrl',    project.modupdateurl
+    inputs.property 'credits',      project.modcredits
+
+    //Replaces values only in mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+
+        //Replace the properties, must include every
+        expand  'modid':        project.modid,
+                'name':         project.modname,
+                'version':      project.modversion,
+                'authorList':   project.modauthors,
+                'url':          project.modurl,
+                'updateUrl':    project.modupdateurl,
+                'credits':      project.modcredits
+    }
+
+    //Copy everything else, that's not the mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
