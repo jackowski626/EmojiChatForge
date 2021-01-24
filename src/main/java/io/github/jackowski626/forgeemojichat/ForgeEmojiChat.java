@@ -11,7 +11,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import static io.github.jackowski626.forgeemojichat.Reference.*;
 
-@Mod(modid = MODID, name = Reference.NAME, version = VERSION)
+@Mod(modid = MODID, name = Reference.NAME, version = VERSION, acceptableRemoteVersions = "*")
 public class ForgeEmojiChat
 {
     private Listener listener = new Listener();
