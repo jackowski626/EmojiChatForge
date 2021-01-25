@@ -35,25 +35,7 @@ public class Listener {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onMessage (ServerChatEvent event) {
-        //System.out.println(event.message);
-        //System.out.println(event.component.getUnformattedText());
-
-        //ChatStyle test = event.component.getChatStyle().createDeepCopy();
-
-        /*try {
-            System.out.println("1: " + event.message);
-            myReflexionPrivateField = ServerChatEvent.class.getDeclaredField("message");
-            myReflexionPrivateField.setAccessible(true);
-            String newMsg = "test";
-            myReflexionPrivateField.set(event, newMsg);
-            System.out.println("2: " + event.message);
-        } catch (Exception e) {
-            System.out.println(e);
-        };*/
-
-
         event.component = new ChatComponentTranslation(replaceEmojis(event.component.getUnformattedText()));
-
     }
 
     public static void genServerEmojis() {
